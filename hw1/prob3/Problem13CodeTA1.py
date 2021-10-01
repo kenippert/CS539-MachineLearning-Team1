@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn import datasets, linear_model,svm
-from sklearn.linear_model import LinearRegression, ridge_regression, BayesianRidge
+from sklearn.linear_model import LinearRegression, Ridge, BayesianRidge
 from scipy import stats
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -45,7 +45,7 @@ diabetes_X = diabetes_df.drop(labels = 'Disease Progression', axis=1)
 diabetes_y = diabetes_df['Disease Progression']
 
 #splitting into X and Y testing and trianing samples
-diabetes_X_train, diabetes_X_test, diabetes_y_train, diabetes_y_test = train_test_split(diabetes_X, diabetes_y, test_size = 0.2, random_state = 999)
+diabetes_X_train, diabetes_X_test, diabetes_y_train, diabetes_y_test = train_test_split(diabetes_X, diabetes_y, test_size = 0.2, random_state = 0)
 
 #Linear regression model for disease progression
 LR = linear_model.LinearRegression()
@@ -58,34 +58,44 @@ diabetes_progression_pred = LR.predict(diabetes_X_test)
 intercept = LR.intercept_
 
 # The regression coefficients, MSE and R2 - I cant get this to print anymore for some reason ever since I switched to using the data in a dataframe
-print('Regression Coefficients: \n', LR.coef_)
-print('Intercept \n', LR.intercept_)
-print('Mean squared error: %.2f' % mean_squared_error(diabetes_y_test, diabetes_progression_pred))
-print('R2 Score: %.2f' % r2_score(diabetes_y_test, diabetes_progression_pred))
+print('Linear Regression Coefficients: \n', LR.coef_)
+print('Intercept: \n', LR.intercept_)
+print('Mean squared error:  %.2f' % mean_squared_error(diabetes_y_test, diabetes_progression_pred))
+print('R2 Score: \n %.2f ' % r2_score(diabetes_y_test, diabetes_progression_pred))
 
 
 #also we are supposed to use cross validation but I cant get it to print the scores :(
 from sklearn.model_selection import cross_val_score
-clf = svm.SVC(kernel='linear', C=1, random_state=42)
-scores = cross_val_score(clf, diabetes_X, diabetes_y, cv=5)
-print('Cross Validation Scores: %0.2f accuracy with standard deviation of %0.2f \n' %(scores.mean(), scores.std()))
+clf1 = svm.SVC(kernel='linear', C=1, random_state=42).fit(diabetes_X_train, diabetes_y_train)
+scores = cross_val_score(clf1, diabetes_X_test, diabetes_y_test, cv=2)
+print('Cross Validation Scores for Linear Regression: \n %0.2f accuracy with standard deviation of %0.2f \n' %(scores.mean(), scores.std()))
 
 
 #Ridge Regression
 
 #fitting the training data using ridge regression
-RR = linear_model.ridge_regression
-clf = RR.fit(diabetes_X_train,diabetes_y_train)
+n_samples, n_features = 442,10 
+clf2 = Ridge(alpha=1.0)
+clf2.fit(diabetes_X_train,diabetes_y_train)
+Ridge()
+clf2.predict(diabetes_X_test)
+clf2.score(diabetes_X_test, diabetes_progression_pred)
+#RR = linear_model.Ridge
+#clf = RR.fit(diabetes_X_train,diabetes_y_train)
 
-y_predict = clf.predict(diabetes_X_test)
+#y_predict = clf.predict(diabetes_X_test)
 
-clf.score(diabetes_X_test, y_predict)
+#clf.score(diabetes_X_test, y_predict)
 
-print("Clf Score:", clf.score(diabetes_X_test,y_predict))
+print('Ridge Regression Coefficients: \n', clf2.coef_)
+print("Classification Score for Ridge Regression: \n", clf2.score(diabetes_X_test,diabetes_progression_pred))
+clf5 = svm.SVC(kernel='linear', C=1, random_state=42)
+scores = cross_val_score(clf5, diabetes_X, diabetes_y, cv=2)
+print('Cross Validation Scores for Ridge Regression: \n %0.2f accuracy with standard deviation of %0.2f \n' %(scores.mean(), scores.std()))
 
 #BayesianRidgeRegression
 np.random.seed(0)
-n_samples, n_features = 100,100
+n_samples, n_features = 442,10
 
 X = np.random.randn(n_samples, n_features)
 lambda_ =4
@@ -98,14 +108,18 @@ for i in relevant_features:
     noise = stats.norm.rvs(loc=0, scale =1 / np.sqrt(alpha_), size = n_samples)
     y = np.dot(X, w) + noise
 
-clf = BayesianRidge(compute_score=True)
-clf.fit(diabetes_X_train, diabetes_y_train)
+clf3 = BayesianRidge(compute_score=True)
+clf3.fit(diabetes_X_train, diabetes_y_train)
 
-y_predict = clf.predict(diabetes_X_test)
+y_predict = clf3.predict(diabetes_X_test)
 
-clf.score(diabetes_X_test, y_predict)
+clf3.score(diabetes_X_test, diabetes_y_test)
+print('Bayesian Ridge Coefficients: \n', clf3.coef_)
+print("Classification Score for Bayesian Ridge Regression: \n", clf3.score(diabetes_X_test,diabetes_y_test))
 
-print("Clf Score:", clf.score(diabetes_X_test,y_predict))
+clf4 = svm.SVC(kernel='linear', C=1, random_state=42)
+scores = cross_val_score(clf4, diabetes_X, diabetes_y, cv=2)
+print('Cross Validation Scores for Bayesian Ridge Regression: \n %0.2f accuracy with standard deviation of %0.2f \n' %(scores.mean(), scores.std()))
 
 #KNN Classifier
 
@@ -114,11 +128,11 @@ KNN = KNeighborsClassifier(n_neighbors=10)
 #fitting the model
 KNN.fit(diabetes_X_train, diabetes_y_train)
 
-KNN.predict(diabetes_X_test) [0:5]
+KNN.predict(diabetes_X_test)
 KNN.score(diabetes_X_test,diabetes_y_test)
 print('KNN Classifier Score: \n', KNN.score)
 
 KNN_CV = KNeighborsClassifier(n_neighbors=10)
-CV_scores = cross_val_score(KNN_CV, diabetes_X, diabetes_y, cv=5)
-print(CV_scores)
-print('CV_Scores: []'.format(np.mean(CV_scores)))
+CV_score = cross_val_score(KNN_CV, diabetes_X, diabetes_y, cv=2)
+print('CV Score for KNN Classifier: \n',CV_score)
+
